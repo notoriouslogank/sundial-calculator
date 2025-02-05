@@ -17,36 +17,65 @@ class Chronos:
         self.latitude = latitude
         self.longitude = longitude
 
-    def difference_from_utc(self):
-        local_time = datetime.datetime.now().astimezone()
-        utc_time = datetime.datetime.now(datetime.timezone.utc)
-        time_difference = utc_time - local_time
-        print(time_difference)
-        return time_difference
+    def get_timezone(self) -> str:
+        """Determine sundial timezone.
 
-    def get_timezone(self):
+        Returns:
+            str: Sundial's timezone name
+        """
         tf = timezonefinder.TimezoneFinder()
         timezone = tf.timezone_at(lng=self.longitude, lat=self.latitude)
         return timezone
 
-    def get_utc_offset(self, timezone):
+    def get_utc_offset(self, timezone: str) -> float:
+        """Calculate sundial's offset from UTC
+
+        Args:
+            timezone (str): Timezone of sundial
+
+        Returns:
+            float: Offset from UTC
+        """
         local_tz = pytz.timezone(timezone)
         utc_offset = local_tz.utcoffset(datetime.datetime.now()).total_seconds() / 3600
         return utc_offset
 
-    def find_central_meridian(self, utc_offset):
+    def find_central_meridian(self, utc_offset: float) -> float:
+        """Calculate the central meridian for the sundial's timezone
+
+        Args:
+            utc_offset (float): UTC offset for sundial's timezone
+
+        Returns:
+            float: Location of central meridian, in degrees
+        """
         central_meridian = utc_offset * 15
         return central_meridian
 
-    def calculate_dial_tilt(self, central_meridian):
+    def calculate_dial_tilt(self, central_meridian: float) -> float:
+        """Calculate amount of tilt to zero sundial to central meridian
+
+        Args:
+            central_meridian (float): Location of central meridian for sundial's timezone in degrees
+
+        Returns:
+            float: Amount to tilt sundial in degrees
+        """
         tilt_rad = math.sin(
             numpy.deg2rad(self.longitude) - numpy.deg2rad(central_meridian)
         ) * math.cos(numpy.deg2rad(self.latitude))
         tilt = numpy.rad2deg(tilt_rad)
         return round(float(tilt), 2)
 
-    def calculate_dial_rotation(self, central_meridian):
-        # R = sin(degrees_diff) * sin(latitude)
+    def calculate_dial_rotation(self, central_meridian: float) -> float:
+        """Calculate amount to rotate sundial face to zero out difference from central meridian
+
+        Args:
+            central_meridian (float): Location of central meridian for sundial's timezone, in degrees
+
+        Returns:
+            float: Amount to rotate sundial, in degrees
+        """
         rotation_rad = math.sin(
             numpy.deg2rad(self.longitude) - numpy.deg2rad(central_meridian)
         ) * math.sin(self.latitude)
@@ -118,26 +147,63 @@ class Chronos:
         eot = eot1 - eot2
         return eot
 
-    def get_data_table(self) -> str:
-        """Create information string reflecting the current Day of Year and Equation of Time
-
-        Raises:
-            Exception: If the Equation of Time happens to be exactly zero, errors arise
+    def get_eot_message(self) -> str:
+        """Create Equation of Time info message.
 
         Returns:
-            str: Description of Day of Year and Equation of Time for the current day
+            str: Equation of Time info message
         """
-        doy = f"\nToday is day number {self.doy}."
         eot = self.equation_of_time()
+        fmt_eot = f"{abs(eot):.2f}"
         if eot > 0:
-            subtract_eot = str(
-                f"{doy}\nPlease subtract {abs(eot):2f} minutes from your readings today!\n"
-            )
-            return subtract_eot
+            eot_message = str(f"subtract {fmt_eot} minutes\n")
         elif eot < 0:
-            add_eot = str(
-                f"{doy}\nPlease add {abs(eot):2f} minutes to your sundial readings today!\n"
-            )
-            return add_eot
-        else:
-            raise Exception("I'm not sure how we got here...")
+            eot_message = str(f"add {fmt_eot} minutes\n")
+        return eot_message
+
+    def output_summary(self, dial_tilt: float, dial_rotation: float) -> str:
+        """Create summary of calculated values.
+
+        Args:
+            dial_tilt (float): Amount to tilt sundial to zero, in degrees
+            dial_rotation (float): Amount to rotate sundial to zero, in degrees
+
+        Returns:
+            str: Sundial info summary
+        """
+        separator = f"--------------------\n"
+        basic_info = f"Your sundial has been created based the coordinates: {round(self.latitude, 2), round(self.longitude, 2)}!\n"
+        day_info = f"Based on that information, we have calculated the following:\nDay of Year: {self.doy}\nEquation of Time Adjustment: {self.get_eot_message()}"
+        zeroing_message = f"To ensure greatest accuracy, please perform the following transformations to your sundial:\nTilt Sundial by {dial_tilt}°\nRotate Sundial by {dial_rotation}°\n"
+        summary = f"\n{basic_info}{separator}{day_info}{separator}{zeroing_message}{separator}"
+        return summary
+
+
+def calculate(latitude: float, longitude: float) -> tuple:
+    """Do necessary calculations and return various results
+
+    Args:
+        latitude (float): Sundial latitude
+        longitude (float): Sundial longitude
+
+    Returns:
+        tuple: Formatted angle list, angle list, summary, dial tilt, dial rotation
+    """
+    angle_list = []
+    fmt_angle_list = []
+    chronos = Chronos(latitude, longitude)
+    sundial_tz = chronos.get_timezone()
+    utc_offset = chronos.get_utc_offset(sundial_tz)
+    central_meridian = chronos.find_central_meridian(utc_offset)
+    dial_tilt = chronos.calculate_dial_tilt(central_meridian)
+    dial_rotation = chronos.calculate_dial_rotation(central_meridian)
+    for time in chronos.times:
+        round_time = chronos.get_round_time(time)
+        formatted_time = chronos.format_time(round_time)
+        tan_theta = chronos.calculate_tan_theta(time, chronos.latitude)
+        result = max(-90, min(90, round(tan_theta, 2)))
+        fmt_result = str(f"{formatted_time} = {result}°")
+        angle_list.append(result)
+        fmt_angle_list.append(fmt_result)
+    summary = chronos.output_summary(dial_tilt, dial_rotation)
+    return fmt_angle_list, angle_list, summary, dial_tilt, dial_rotation
