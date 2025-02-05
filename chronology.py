@@ -1,7 +1,6 @@
 import datetime
 import math
 
-import numpy
 import pytz
 import timezonefinder
 
