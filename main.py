@@ -28,8 +28,7 @@ def write_info_file(summary: str, data: list):
     """
     with open("info.txt", "w") as file:
         file.write(f"{summary}")
-    for daton in data:
-        with open("info.txt", "a") as file:
+        for daton in data:
             file.write(f"{str(daton)}\n")
 
 
@@ -39,5 +38,8 @@ if __name__ == "__main__":
         latitude, longitude
     )
     create_sundial(latitude, longitude, angle_list, dial_tilt, dial_rotation)
+    print(f"\nSundial Hour Angles:")
+    for time in formatted_angle_list:
+        print(f"{time}")
     print(summary)
     write_info_file(summary, formatted_angle_list)
