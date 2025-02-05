@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy
 
 fig, ax = plt.subplots(figsize=(10, 10), dpi=300)
+ORIGIN = (10, 10)
 
 
 class Draw:
@@ -53,7 +54,7 @@ class Draw:
 
     def label_latitude(self, latitude):
         latitude_x = self.origin[0]
-        latitude_y = self.origin[1] - self.radius * 0.5
+        latitude_y = 12 - self.radius * 0.5
         ax.text(
             latitude_x,
             latitude_y,
@@ -61,6 +62,45 @@ class Draw:
             ha="center",
             va="center",
             fontsize=20,
+            fontweight="bold",
+        )
+
+    def label_longitude(self, longitude):
+        longitude_x = 10
+        longitude_y = 10 - self.radius * 0.5
+        ax.text(
+            longitude_x,
+            longitude_y,
+            f"Longitude: {longitude}°",
+            ha="center",
+            va="center",
+            fontsize=20,
+            fontweight="bold",
+        )
+
+    def label_dial_tilt(self, dial_tilt):
+        longitude_x = 10
+        longitude_y = 8 - self.radius * 0.5
+        ax.text(
+            longitude_x,
+            longitude_y,
+            f"Dial tilt:{dial_tilt}°",
+            ha="center",
+            va="center",
+            fontsize=15,
+            fontweight="bold",
+        )
+
+    def label_dial_rotation(self, dial_rotation):
+        longitude_x = 10
+        longitude_y = 6 - self.radius * 0.5
+        ax.text(
+            longitude_x,
+            longitude_y,
+            f"Dial Rotation: {dial_rotation}°",
+            ha="center",
+            va="center",
+            fontsize=15,
             fontweight="bold",
         )
 
@@ -83,7 +123,7 @@ class Draw:
             ax.text(
                 label_x,
                 label_y,
-                f"{numpy.rad2deg(angle)}°",
+                f"{numpy.rad2deg(angle):.2f}°",
                 ha="center",
                 va="center",
                 fontsize=8,
@@ -108,3 +148,17 @@ class Draw:
         ax.spines["left"].set_visible(False)
         plt.gca().set_position([0, 0, 1, 1])
         plt.savefig(f"sundial_template.png", bbox_inches=None, transparent=True)
+
+
+def create_sundial(latitude, longitude, angle_list, dial_tilt, dial_rotation):
+    sundial = Draw(ORIGIN, 15)
+    sundial.create_circle()
+    sundial.draw_equatorial()
+    sundial.draw_meridian()
+    sundial.hour_line(angle_list)
+    sundial.label_latitude(round(latitude, 2))
+    sundial.label_longitude(round(longitude, 2))
+    sundial.label_dial_tilt(dial_tilt)
+    sundial.label_dial_rotation(dial_rotation)
+    sundial.draw()
+    return
