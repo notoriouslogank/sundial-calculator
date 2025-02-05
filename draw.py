@@ -36,7 +36,7 @@ class Draw:
         x_coordinates = [
             10,
             10,
-        ]  # TODO: Make these valuables relative to origin rather than hardcoded
+        ]
         y_coordinates = [10, 25]  # TODO: See above
         plt.plot(x_coordinates, y_coordinates, color="red")
         true_north_x = self.origin[0]
@@ -52,7 +52,12 @@ class Draw:
         )
         return
 
-    def label_latitude(self, latitude):
+    def label_latitude(self, latitude: float):
+        """Draw latitude label on sundial image
+
+        Args:
+            latitude (float): Sundial's latitude
+        """
         latitude_x = self.origin[0]
         latitude_y = 12 - self.radius * 0.5
         ax.text(
@@ -65,7 +70,12 @@ class Draw:
             fontweight="bold",
         )
 
-    def label_longitude(self, longitude):
+    def label_longitude(self, longitude: float):
+        """Draw longitude label on sundial image
+
+        Args:
+            longitude (float): Sundial's longitude
+        """
         longitude_x = 10
         longitude_y = 10 - self.radius * 0.5
         ax.text(
@@ -78,7 +88,12 @@ class Draw:
             fontweight="bold",
         )
 
-    def label_dial_tilt(self, dial_tilt):
+    def label_dial_tilt(self, dial_tilt: float):
+        """Draw dial tilt label on sundial image
+
+        Args:
+            dial_tilt (float): Amount of tilt to zero sundial
+        """
         longitude_x = 10
         longitude_y = 8 - self.radius * 0.5
         ax.text(
@@ -91,7 +106,12 @@ class Draw:
             fontweight="bold",
         )
 
-    def label_dial_rotation(self, dial_rotation):
+    def label_dial_rotation(self, dial_rotation: float):
+        """Draw dial rotation label on sundial image
+
+        Args:
+            dial_rotation (float): Amount of rotation to zero sundial
+        """
         longitude_x = 10
         longitude_y = 6 - self.radius * 0.5
         ax.text(
@@ -150,7 +170,22 @@ class Draw:
         plt.savefig(f"sundial_template.png", bbox_inches=None, transparent=True)
 
 
-def create_sundial(latitude, longitude, angle_list, dial_tilt, dial_rotation):
+def create_sundial(
+    latitude: float,
+    longitude: float,
+    angle_list: list,
+    dial_tilt: float,
+    dial_rotation: float,
+):
+    """Draw sundial template and write image to sundial_template.png
+
+    Args:
+        latitude (float): Sundial latitude
+        longitude (float): Sundial longitude
+        angle_list (list): List of angles for hour marks
+        dial_tilt (float): Degrees of tilt to zero sundial
+        dial_rotation (float): Degrees of rotation to zero sundial
+    """
     sundial = Draw(ORIGIN, 15)
     sundial.create_circle()
     sundial.draw_equatorial()
