@@ -1,6 +1,7 @@
+import math
+
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-import numpy
 
 fig, ax = plt.subplots(figsize=(10, 10), dpi=300)
 ORIGIN = (10, 10)
@@ -23,10 +24,10 @@ class Draw:
     def draw_equatorial(self):
         """Draw the equatorial line (horizon) on dial face"""
         x_coordinates = [
-            -5,
-            25,
-        ]  # TODO: Make these valuables relative to origin rather than hardcoded
-        y_coordinates = [10, 10]  # TODO: See above
+            self.origin[0] - self.radius,
+            self.origin[0] + self.radius,
+        ]
+        y_coordinates = [self.origin[1], self.origin[1]]
         plt.plot(x_coordinates, y_coordinates, color="black", linestyle="--")
         plt.title("Sundial")
         return
@@ -34,10 +35,13 @@ class Draw:
     def draw_meridian(self):
         """Draw meridian line (due North) on dial face"""
         x_coordinates = [
-            10,
-            10,
+            self.origin[0],
+            self.origin[0],
         ]
-        y_coordinates = [10, 25]  # TODO: See above
+        y_coordinates = [
+            self.origin[1],
+            self.origin[1] + self.radius,
+        ]
         plt.plot(x_coordinates, y_coordinates, color="red")
         true_north_x = self.origin[0]
         true_north_y = self.origin[1] + self.radius * 0.9
@@ -99,7 +103,7 @@ class Draw:
         ax.text(
             longitude_x,
             longitude_y,
-            f"Dial tilt:{dial_tilt}°",
+            f"Dial tilt: {dial_tilt}°",
             ha="center",
             va="center",
             fontsize=15,
@@ -130,20 +134,22 @@ class Draw:
         Args:
             angles (list): List of angles calculated for each hourly marker
         """
-        angles_rad = numpy.radians(angles)
+        angles_rad = []
+        for angle in angles:
+            angles_rad.append(math.radians(angle))
         for angle in angles_rad:
-            x_end = self.origin[0] + self.radius * numpy.sin(angle)
-            y_end = self.origin[1] + self.radius * numpy.cos(angle)
+            x_end = self.origin[0] + self.radius * math.sin(angle)
+            y_end = self.origin[1] + self.radius * math.cos(angle)
             ax.plot(
                 [self.origin[0], x_end], [self.origin[1], y_end], "b", linewidth=0.5
             )
-            label_x = self.origin[0] + (self.radius * 0.75) * numpy.sin(angle)
-            label_y = self.origin[1] + (self.radius * 0.75) * numpy.cos(angle)
+            label_x = self.origin[0] + (self.radius * 0.75) * math.sin(angle)
+            label_y = self.origin[1] + (self.radius * 0.75) * math.cos(angle)
 
             ax.text(
                 label_x,
                 label_y,
-                f"{numpy.rad2deg(angle):.2f}°",
+                f"{math.degrees(angle):.2f}°",
                 ha="center",
                 va="center",
                 fontsize=8,
@@ -186,7 +192,7 @@ def create_sundial(
         dial_tilt (float): Degrees of tilt to zero sundial
         dial_rotation (float): Degrees of rotation to zero sundial
     """
-    sundial = Draw(ORIGIN, 15)
+    sundial = Draw(ORIGIN, 25)
     sundial.create_circle()
     sundial.draw_equatorial()
     sundial.draw_meridian()
