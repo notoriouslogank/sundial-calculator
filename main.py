@@ -1,52 +1,45 @@
-import math
-import numpy
 from rich import print
 
-import chronology
-from draw import Draw
-
-DEGREES = "\u00B0"
-THETA = "\u0398"
-ORIGIN = (10, 10)
+from chronology import calculate
+from draw import create_sundial
 
 
-def get_latitude() -> float:
-    """Get user-input of latitude to use to calculate angles
+def get_coordinates() -> tuple:
+    """Prompt user for latitude and longitude coordinates
 
     Returns:
-        float: The provided latitude, in radians
+        tuple: latitude, longitude
     """
-    l = float(
-        input(
-            "\nPlease enter the latitude for which you would like to receive calculations (must be decimal format): \n"
-        )
+    coords = input(
+        "Enter latitude and longitude for desired sundial location (decimal format): \n"
     )
-    latitude = math.radians(l)  # must convert to radians before calculations
-    print(f"\nLatitude: {l}{DEGREES}\n")
-    return latitude
+    lat, long = coords.split(" ")
+    latitude = float(lat.strip(","))
+    longitude = float(long)
+    return (latitude, longitude)
+
+
+def write_info_file(summary: str, data: list):
+    """Write summary and data to info.txt outfile.
+
+    Args:
+        summary (str): Summary of data used to construct sundial
+        data (list): List of angles for hour markers
+    """
+    with open("info.txt", "w") as file:
+        file.write(f"{summary}")
+        for daton in data:
+            file.write(f"{str(daton)}\n")
 
 
 if __name__ == "__main__":
-    template = Draw(ORIGIN, 15)
-    template.create_circle()
-    template.draw_equatorial()
-    template.draw_meridian()
-    list_of_angles = []
-    latitude = get_latitude()
-    chronometer = chronology.Chronos(latitude)
-    for time in chronometer.times:
-        round_time = chronometer.get_round_time(time)
-        formatted_time = chronometer.format_time(round_time)
-        tan_theta = chronometer.calculate_tan_theta(time, chronometer.latitude)
-        result = max(-90, min(90, round(tan_theta, 2)))
-        entry = str(f"{formatted_time} = {result}{DEGREES}")
-        print(entry)
-        list_of_angles.append(result)
-    template.hour_line(list_of_angles)
-    template.label_latitude(numpy.rad2deg(latitude))
-    with open("angles.txt", "a") as f:
-        for angle in list_of_angles:
-            f.write(str(angle))
-    eot_correction = chronometer.get_data_table()
-    print(eot_correction)
-    template.draw()
+    latitude, longitude = get_coordinates()
+    formatted_angle_list, angle_list, summary, dial_tilt, dial_rotation = calculate(
+        latitude, longitude
+    )
+    create_sundial(latitude, longitude, angle_list, dial_tilt, dial_rotation)
+    print(f"\nSundial Hour Angles:")
+    for time in formatted_angle_list:
+        print(f"{time}")
+    print(summary)
+    write_info_file(summary, formatted_angle_list)
