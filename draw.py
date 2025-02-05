@@ -44,7 +44,7 @@ class Draw:
         ]
         plt.plot(x_coordinates, y_coordinates, color="red")
         true_north_x = self.origin[0]
-        true_north_y = self.origin[1] + self.radius * 0.9
+        true_north_y = self.origin[1] + self.radius * 0.8
         ax.text(
             true_north_x,
             true_north_y,
@@ -134,25 +134,52 @@ class Draw:
         Args:
             angles (list): List of angles calculated for each hourly marker
         """
+        numerals = [
+            "VI",
+            "VII",
+            "VIII",
+            "IX",
+            "X",
+            "XI",
+            "XII",
+            "I",
+            "II",
+            "III",
+            "IV",
+            "V",
+            "VI",
+        ]
         angles_rad = []
         for angle in angles:
             angles_rad.append(math.radians(angle))
         for angle in angles_rad:
+            numeral = numerals.pop(0)
             x_end = self.origin[0] + self.radius * math.sin(angle)
             y_end = self.origin[1] + self.radius * math.cos(angle)
             ax.plot(
                 [self.origin[0], x_end], [self.origin[1], y_end], "b", linewidth=0.5
             )
-            label_x = self.origin[0] + (self.radius * 0.75) * math.sin(angle)
-            label_y = self.origin[1] + (self.radius * 0.75) * math.cos(angle)
-
+            degree_label_x = self.origin[0] + (self.radius * 0.7) * math.sin(angle)
+            degree_label_y = self.origin[1] + (self.radius * 0.7) * math.cos(angle)
+            numeral_label_x = self.origin[0] + (self.radius * 0.95) * math.sin(angle)
+            numeral_label_y = self.origin[1] + (self.radius * 0.95) * math.cos(angle)
             ax.text(
-                label_x,
-                label_y,
+                degree_label_x,
+                degree_label_y,
                 f"{math.degrees(angle):.2f}°",
                 ha="center",
                 va="center",
-                fontsize=8,
+                fontsize=9,
+                fontweight="bold",
+            )
+            ax.text(
+                numeral_label_x,
+                numeral_label_y,
+                f"{numeral}",
+                ha="center",
+                va="center",
+                fontsize=15,
+                fontweight="bold",
             )
 
     def draw(self):
