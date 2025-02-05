@@ -1,16 +1,57 @@
 import datetime
 import math
 
+import numpy
+import pytz
+import timezonefinder
+
 π = math.pi
 
 
 class Chronos:
 
     times = list(range(-6, 7))
-    doy = datetime.date.today().timetuple().tm_yday
+    doy = datetime.datetime.today().timetuple().tm_yday
 
-    def __init__(self, latitude):
+    def __init__(self, latitude, longitude):
         self.latitude = latitude
+        self.longitude = longitude
+
+    def difference_from_utc(self):
+        local_time = datetime.datetime.now().astimezone()
+        utc_time = datetime.datetime.now(datetime.timezone.utc)
+        time_difference = utc_time - local_time
+        print(time_difference)
+        return time_difference
+
+    def get_timezone(self):
+        tf = timezonefinder.TimezoneFinder()
+        timezone = tf.timezone_at(lng=self.longitude, lat=self.latitude)
+        return timezone
+
+    def get_utc_offset(self, timezone):
+        local_tz = pytz.timezone(timezone)
+        utc_offset = local_tz.utcoffset(datetime.datetime.now()).total_seconds() / 3600
+        return utc_offset
+
+    def find_central_meridian(self, utc_offset):
+        central_meridian = utc_offset * 15
+        return central_meridian
+
+    def calculate_dial_tilt(self, central_meridian):
+        tilt_rad = math.sin(
+            numpy.deg2rad(self.longitude) - numpy.deg2rad(central_meridian)
+        ) * math.cos(numpy.deg2rad(self.latitude))
+        tilt = numpy.rad2deg(tilt_rad)
+        return round(float(tilt), 2)
+
+    def calculate_dial_rotation(self, central_meridian):
+        # R = sin(degrees_diff) * sin(latitude)
+        rotation_rad = math.sin(
+            numpy.deg2rad(self.longitude) - numpy.deg2rad(central_meridian)
+        ) * math.sin(self.latitude)
+        rotation = numpy.rad2deg(rotation_rad)
+        return round(float(rotation), 2)
 
     def get_hour_angle(self, time: int) -> float:
         """Convert angle from degrees to radians for easier calculations.
