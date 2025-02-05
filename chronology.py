@@ -62,10 +62,10 @@ class Chronos:
             float: Amount to tilt sundial in degrees
         """
         tilt_rad = math.sin(
-            numpy.deg2rad(self.longitude) - numpy.deg2rad(central_meridian)
-        ) * math.cos(numpy.deg2rad(self.latitude))
-        tilt = numpy.rad2deg(tilt_rad)
-        return round(float(tilt), 2)
+            math.radians(self.longitude) - math.radians(central_meridian)
+        ) * math.cos(math.radians(self.latitude))
+        tilt = math.degrees(tilt_rad)
+        return -round(float(tilt), 2)
 
     def calculate_dial_rotation(self, central_meridian: float) -> float:
         """Calculate amount to rotate sundial face to zero out difference from central meridian
@@ -76,23 +76,18 @@ class Chronos:
         Returns:
             float: Amount to rotate sundial, in degrees
         """
-        rotation_rad = math.sin(
-            numpy.deg2rad(self.longitude) - numpy.deg2rad(central_meridian)
-        ) * math.sin(self.latitude)
-        rotation = numpy.rad2deg(rotation_rad)
-        return round(float(rotation), 2)
+        diff_of_longs = self.longitude - central_meridian
+        delta_diff = math.radians(diff_of_longs)
+        rotation = math.sin(delta_diff) * math.sin(math.radians(self.latitude))
+        rotation_angle = math.degrees(rotation)
+        return -round(float(rotation_angle), 2)
 
-    def get_hour_angle(self, time: int) -> float:
-        """Convert angle from degrees to radians for easier calculations.
-
-        Args:
-            time (int): Number of hours above or below meridian
-
-        Returns:
-            float: Angle of hour, in radians
-        """
-        hour_angle = math.radians(time * 15)
-        return hour_angle
+    def get_hour_angle(self, hour: int) -> float:
+        sin_of_lat = math.sin(math.radians(self.latitude))
+        degree_hours = math.tan(hour * math.radians(15))
+        theta = math.atan((sin_of_lat * degree_hours))
+        theta_angle = math.degrees(theta)
+        return theta_angle
 
     def get_round_time(self, time: int) -> int:
         """Convert the hour +/- into human-readable integer format
@@ -119,23 +114,6 @@ class Chronos:
         formatted_time = raw_time.strftime("%H:%M")
         return formatted_time
 
-    def calculate_tan_theta(self, time: int, latitude: float) -> float:
-        """Use provided latitude and time to calculate angles of hourly demarcations
-
-        Args:
-            time (int): Number of hours before or after meridian
-            latitude (float): Latitude the sundial will be calibrated for use on
-
-        Returns:
-            float: Angle of intersection between hour demarcation and equator
-        """
-        hour_angle = self.get_hour_angle(time)
-        tan_hour_angle = math.tan(hour_angle)
-        sin_latitude = math.sin(latitude)
-        tan_theta = tan_hour_angle * sin_latitude
-        result = math.degrees(math.atan(tan_theta))
-        return result
-
     def equation_of_time(self) -> float:
         """Calculate equation of time to determine how much time should be adjusted for readings based on the day of the year
 
@@ -147,19 +125,17 @@ class Chronos:
         eot = eot1 - eot2
         return eot
 
-    def get_eot_message(self) -> str:
-        """Create Equation of Time info message.
-
-        Returns:
-            str: Equation of Time info message
-        """
-        eot = self.equation_of_time()
-        fmt_eot = f"{abs(eot):.2f}"
-        if eot > 0:
-            eot_message = str(f"subtract {fmt_eot} minutes\n")
-        elif eot < 0:
-            eot_message = str(f"add {fmt_eot} minutes\n")
-        return eot_message
+    def zeroing_message(self, dial_tilt: float, dial_rotation: float) -> str:
+        if dial_tilt > 0:
+            tilt_message = f"Tilt dial by {dial_tilt}° counter-clockwise.\n"
+        elif dial_tilt < 0:
+            tilt_message = f"Tilt dial by {dial_tilt}° clockwise.\n"
+        if dial_rotation > 0:
+            rotation_message = f"Rotate dial by {dial_rotation}° counter-clockwise.\n"
+        elif dial_rotation < 0:
+            rotation_message = f"Rotate dial by {dial_rotation}° clockwise.\n"
+        zeroing_message = tilt_message, rotation_message
+        return zeroing_message
 
     def output_summary(self, dial_tilt: float, dial_rotation: float) -> str:
         """Create summary of calculated values.
@@ -173,9 +149,8 @@ class Chronos:
         """
         separator = f"--------------------\n"
         basic_info = f"Your sundial has been created based the coordinates: {round(self.latitude, 2), round(self.longitude, 2)}!\n"
-        day_info = f"Based on that information, we have calculated the following:\nDay of Year: {self.doy}\nEquation of Time Adjustment: {self.get_eot_message()}"
-        zeroing_message = f"To ensure greatest accuracy, please perform the following transformations to your sundial:\nTilt Sundial by {dial_tilt}°\nRotate Sundial by {dial_rotation}°\n"
-        summary = f"\n{basic_info}{separator}{day_info}{separator}{zeroing_message}{separator}"
+        tilt_message, rotation_message = self.zeroing_message(dial_tilt, dial_rotation)
+        summary = f"{separator}{basic_info}{separator}{tilt_message}{rotation_message}{separator}"
         return summary
 
 
@@ -200,7 +175,7 @@ def calculate(latitude: float, longitude: float) -> tuple:
     for time in chronos.times:
         round_time = chronos.get_round_time(time)
         formatted_time = chronos.format_time(round_time)
-        tan_theta = chronos.calculate_tan_theta(time, chronos.latitude)
+        tan_theta = chronos.get_hour_angle(time)
         result = max(-90, min(90, round(tan_theta, 2)))
         fmt_result = str(f"{formatted_time} = {result}°")
         angle_list.append(result)
