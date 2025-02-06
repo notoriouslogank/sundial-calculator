@@ -5,7 +5,7 @@
 - [About](#about)
 - [Getting Started](#getting_started)
 - [Usage](#usage)
-- [Contributing](../CONTRIBUTING.md)
+- [Acknowledgements](#acknowledgements)
 
 ## About <a name = "about"></a>
 
@@ -37,3 +37,7 @@ Simply run the main function and input latitude and longitude data when prompted
 ```bash
 python3 main.py
 ```
+
+## Acknowledgements <a name = "acknowledgements"></a>
+
+Many thanks to [this](https://dev.to/pauljlucas/everything-you-ever-wanted-to-know-about-sundials-5h2l) post for the thorough breakdown of the required calculations.
